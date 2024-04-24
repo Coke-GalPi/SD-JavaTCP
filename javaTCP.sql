@@ -1,6 +1,6 @@
 /*==============================================================*/
 /* DBMS name:      MySQL 5.0                                    */
-/* Created on:     24-04-2024 11:18:19                          */
+/* Created on:     24-04-2024 11:26:34                          */
 /*==============================================================*/
 
 
@@ -15,6 +15,7 @@ create table DOCUMENTOS
 (
    ID_DOC               int not null auto_increment,
    NOMBRE               varchar(100),
+   TEMA                 varchar(100),
    URL                  varchar(4096),
    primary key (ID_DOC)
 );

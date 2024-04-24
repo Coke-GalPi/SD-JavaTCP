@@ -1,7 +1,7 @@
 import java.sql.*;
 
 public class Conexiondb {
-    private static final String URL = "jdbc:mysql://localhost:3306/diccionario";
+    private static final String URL = "jdbc:mysql://localhost:3306/ds-javatcp";
     private static final String USUARIO = "root";
     private static final String CONTRASENA = "";
 

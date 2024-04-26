@@ -48,14 +48,27 @@ public class ClienteTCP {
                             System.out.print("Ingrese una opcion: ");
                             opcionDIC = scanner.nextInt();
                             scanner.nextLine();
+                            String palabra, significado, msj, datos;
                             switch (opcionDIC) {
                                 case 1:
                                     System.out.println("\nBuscar palabra");
-
+                                    System.out.print("Ingrese la palagra que quiere buscar: ");
+                                    palabra = scanner.nextLine();
+                                    msj = "buscarPalabra:" + palabra;
+                                    salida.writeUTF(msj);
+                                    datos = entrada.readUTF();
+                                    System.out.println(datos);
                                     break;
                                 case 2:
                                     System.out.println("\nAgregar palabra con significado");
-
+                                    System.out.print("Ingrese la palagra: ");
+                                    palabra = scanner.nextLine();
+                                    System.out.print("Ingrese el significado: ");
+                                    significado = scanner.nextLine();
+                                    msj = "agregarPalabra:" + palabra + "," + significado;
+                                    salida.writeUTF(msj);
+                                    datos = entrada.readUTF();
+                                    System.out.println(datos);
                                     break;
                                 case 0:
                                     System.out.println("\n\nSaliendo del Diccionario...\n");

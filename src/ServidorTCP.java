@@ -7,66 +7,14 @@ public class ServidorTCP {
         try {
             int puertoServicio = 7896;
             ServerSocket escuchandoSocket = new ServerSocket(puertoServicio);
-
             while (true) {
                 Socket socketCliente = escuchandoSocket.accept();
                 Conexion c = new Conexion(socketCliente);
-                System.out.println("Conexion Thread: " + c);
-
-                DataInputStream entrada = new DataInputStream(socketCliente.getInputStream());
-                String mensaje = entrada.readUTF();
-
-                // Verificar los datos recibidos del cliente
-                System.out.println("Datos recibidos del cliente:");
-                System.out.println("Mensaje: " + mensaje);
-
-                // Separar los valores usando el delimitador
-                String[] valores = mensaje.split("\\|");
-                String nombreArchivo = valores[0];
-                String temaArchivo = valores[1];
-                String rutaArchivo = valores[2];
-
-                // Mostrar los valores recibidos
-                System.out.println("Nombre del archivo: " + nombreArchivo);
-                System.out.println("Tema del archivo: " + temaArchivo);
-                System.out.println("Ruta del archivo: " + rutaArchivo);
-
-                // Realizar la consulta SQL
-                guardarArchivo(nombreArchivo, temaArchivo, rutaArchivo);
-
-                // Cerrar conexión
-                socketCliente.close();
-                System.out.println("Conexión cerrada con el cliente.");
-
+                System.out.println("Conexion: " + c);
+                System.out.println("Escuchando: " + escuchandoSocket);
             }
-        } catch (IOException | SQLException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private static void guardarArchivo(String nombreArchivo, String temaArchivo, String rutaArchivo)
-            throws SQLException {
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-
-        try {
-            conn = Conexiondb.obtenerConexion();
-            String sql = "INSERT INTO documentos (NOMBRE, TEMA, URL) VALUES (?, ?, ?)";
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, nombreArchivo);
-            pstmt.setString(2, temaArchivo);
-            pstmt.setString(3, rutaArchivo);
-            pstmt.executeUpdate();
-
-            System.out.println("Información del archivo guardada en la base de datos.");
-        } finally {
-            // Cerrar recursos
-            if (pstmt != null) {
-                pstmt.close();
-            }
-            if (conn != null) {
-                conn.close();
-            }
+        } catch (IOException e) {
+            System.out.println("Escuchando:" + e.getMessage());
         }
     }
 }
@@ -83,19 +31,76 @@ class Conexion extends Thread {
             salida = new DataOutputStream(socketCliente.getOutputStream());
             this.start();
         } catch (IOException e) {
-            System.out.println("Conexión:" + e.getMessage());
+            System.out.println("Conexión :" + e.getMessage());
         }
     }
 
     public void run() {
         try {
             String datos = entrada.readUTF();
-            salida.writeUTF(datos);
+            if (datos.startsWith("buscarPalabra:")) {
+                String palabra = datos.substring(14);
+                buscarPalabraEnBD(palabra);
+            } else if (datos.startsWith("agregarPalabra:")) {
+                String contenido = datos.substring(15); // O ajusta el índice según necesites
+                String[] partes = contenido.split(",", 2);
+                if (partes.length < 2) {
+                    salida.writeUTF("Error: formato incorrecto para agregar.");
+                } else {
+                    String palabra = partes[0];
+                    String significado = partes[1];
+                    agregarPalabraEnBD(palabra, significado);
+                }
+            }
             socketCliente.close();
         } catch (EOFException e) {
             System.out.println("EOF: " + e.getMessage());
         } catch (IOException e) {
             System.out.println("IO: " + e.getMessage());
+        }
+    }
+
+    private void buscarPalabraEnBD(String palabra) {
+        try {
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dsjavatcp",
+                    "root",
+                    "");
+            String consulta = "SELECT significado FROM palabras WHERE palabra = ?";
+            PreparedStatement pstmt = conn.prepareStatement(consulta);
+            pstmt.setString(1, palabra);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                salida.writeUTF("El significado de '" + palabra + "' es: " + rs.getString("significado"));
+            } else {
+                salida.writeUTF("La palabra '" + palabra + "' no está almacenada en la base de datos");
+            }
+            rs.close();
+            pstmt.close();
+            conn.close();
+        } catch (SQLException e) {
+            System.out.println("Error al buscar en la base de datos: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error al enviar datos al cliente: " + e.getMessage());
+        }
+    }
+
+    private void agregarPalabraEnBD(String palabra, String significado) {
+        try {
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dsjavatcp",
+                    "root",
+                    "");
+            String consulta = "INSERT INTO palabras (PALABRA, SIGNIFICADO) VALUES (?, ?)";
+            PreparedStatement statement = conn.prepareStatement(consulta);
+            statement.setString(1, palabra);
+            statement.setString(2, significado);
+            statement.executeUpdate();
+            salida.writeUTF("El significado de " + palabra + " fue ingresada con exito.");
+            statement.close();
+            conn.close();
+        } catch (SQLException e) {
+            System.out.println("Error al agregar palabra en la base de datos: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error al enviar datos al cliente: " + e.getMessage());
         }
     }
 }

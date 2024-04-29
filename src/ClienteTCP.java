@@ -4,29 +4,29 @@ import java.util.Scanner;
 
 public class ClienteTCP {
     public static void mostrarMenuApp() {
-        System.out.println("\n\n--Menu--");
+        System.out.println("\n--Menu--");
         System.out.println("1.- Diccionario");
-        System.out.println("2.- Traspaso de PDF");
+        System.out.println("2.- PDF");
         System.out.println("0.- Salir App");
     }
 
     public static void mostrarMenuAppDic() {
-        System.out.println("\n\n--Menu Diccionario--");
+        System.out.println("--Menu Diccionario--");
         System.out.println("1.- Buscar");
         System.out.println("2.- Agregar");
         System.out.println("0.- Salir Diccionario");
     }
 
     public static void mostrarMenuAppPD() {
-        System.out.println("\n\n--Menu Diccionario--");
+        System.out.println("--Menu Documentos--");
         System.out.println("1.- Buscar");
-        System.out.println("2.- Decargar");
+        System.out.println("2.- Agregar");
         System.out.println("0.- Salir PDF");
     }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("\nIngrese la ip a la que se va a conectar: ");
+        System.out.print("\nIngrese la IP a la que se va a conectar: ");
         String ipService = scanner.nextLine();
         int opcionApp;
         try {
@@ -51,7 +51,7 @@ public class ClienteTCP {
                             String palabra, significado, msj, datos;
                             switch (opcionDIC) {
                                 case 1:
-                                    System.out.println("\nBuscar palabra");
+                                    System.out.println("Buscar palabra");
                                     System.out.print("Ingrese la palagra que quiere buscar: ");
                                     palabra = scanner.nextLine();
                                     msj = "buscarPalabra:" + palabra;
@@ -60,7 +60,7 @@ public class ClienteTCP {
                                     System.out.println(datos);
                                     break;
                                 case 2:
-                                    System.out.println("\nAgregar palabra con significado");
+                                    System.out.println("Agregar palabra con significado");
                                     System.out.print("Ingrese la palagra: ");
                                     palabra = scanner.nextLine();
                                     System.out.print("Ingrese el significado: ");
@@ -80,29 +80,52 @@ public class ClienteTCP {
                         break;
                     case 2:
                         System.out.println("\nTraspaso de PDF.");
-
-                        System.out.print("Ingrese el nombre del archivo: ");
-                        String nombreArchivo = scanner.nextLine();
-
-                        System.out.print("Ingrese el tema del archivo: ");
-                        String temaArchivo = scanner.nextLine();
-
-                        System.out.print("Ingrese la ruta del archivo: ");
-                        String rutaArchivo = scanner.nextLine();
-
-                        System.out.println("Datos a enviar al servidor:");
-                        System.out.println("Nombre del archivo: " + nombreArchivo);
-                        System.out.println("Tema del archivo: " + temaArchivo);
-                        System.out.println("Ruta del archivo: " + rutaArchivo);
-
-                        // Enviar los datos al servidor
-                        String mensaje = nombreArchivo + "|" + temaArchivo + "|" + rutaArchivo;
-                        salida.writeUTF(mensaje);
-                        System.out.println("Datos enviados al servidor.");
-
-                        // Leer la respuesta del servidor si es necesario
-                        String datos = entrada.readUTF();
-                        System.out.println("\nRecibido del servidor: " + datos);
+                        int opcionPDF;
+                        do {
+                            mostrarMenuAppPD();
+                            System.out.print("Ingrese una opcion: ");
+                            opcionPDF = scanner.nextInt();
+                            scanner.nextLine();
+                            String nombrePDF, msj, datos;
+                            switch (opcionPDF) {
+                                case 1:
+                                    System.out.println("Buscar PDF");
+                                    System.out.print("Ingrese el nombre del PDF que quiere buscar: ");
+                                    nombrePDF = scanner.nextLine();
+                                    msj = "buscarPDF:" + nombrePDF;
+                                    salida.writeUTF(msj);
+                                    datos = entrada.readUTF();
+                                    System.out.println(datos);
+                                    break;
+                                case 2:
+                                    System.out.println("Agregar PDF");
+                                    System.out.print("Ingrese el nombre del archivo: ");
+                                    nombrePDF = scanner.nextLine();
+                                    System.out.print("Ingrese la ruta del archivo: ");
+                                    String rutaPDF = scanner.nextLine();
+                                    File archivoPDF = new File(rutaPDF);
+                                    if (archivoPDF.exists() && !archivoPDF.isDirectory()) {
+                                        try (FileInputStream fis = new FileInputStream(archivoPDF)) {
+                                            byte[] buffer = new byte[4096];
+                                            int bytesRead = -1;
+                                            while ((bytesRead = fis.read(buffer)) != -1) {
+                                                salida.write(buffer, 0, bytesRead);
+                                            }
+                                            salida.flush();
+                                        } catch (IOException ex) {
+                                            System.out.println("Error al leer el archivo: " + ex.getMessage());
+                                        }
+                                    } else {
+                                        System.out.println("El archivo no existe o es un directorio.");
+                                    }
+                                    break;
+                                case 0:
+                                    System.out.println("\n\nSaliendo del PDF...\n");
+                                    break;
+                                default:
+                                    System.out.println("Opcion no valida");
+                            }
+                        } while (opcionPDF != 0);
                         break;
                     case 0:
                         System.out.println("\n\nSaliendo de la APP...\n");

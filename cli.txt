@@ -1,0 +1,22 @@
+                        System.out.print("Ingrese el nombre del archivo: ");
+                        String nombreArchivo = scanner.nextLine();
+
+                        System.out.print("Ingrese el tema del archivo: ");
+                        String temaArchivo = scanner.nextLine();
+
+                        System.out.print("Ingrese la ruta del archivo: ");
+                        String rutaArchivo = scanner.nextLine();
+
+                        System.out.println("Datos a enviar al servidor:");
+                        System.out.println("Nombre del archivo: " + nombreArchivo);
+                        System.out.println("Tema del archivo: " + temaArchivo);
+                        System.out.println("Ruta del archivo: " + rutaArchivo);
+
+                        // Enviar los datos al servidor
+                        String mensaje = nombreArchivo + "|" + temaArchivo + "|" + rutaArchivo;
+                        salida.writeUTF(mensaje);
+                        System.out.println("Datos enviados al servidor.");
+
+                        // Leer la respuesta del servidor si es necesario
+                        String datos = entrada.readUTF();
+                        System.out.println("\nRecibido del servidor: " + datos);

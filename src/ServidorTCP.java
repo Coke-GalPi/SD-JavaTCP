@@ -1,6 +1,7 @@
 import java.net.*;
 import java.io.*;
 import java.sql.*;
+import java.nio.file.*;
 
 public class ServidorTCP {
     public static void main(String args[]) {
@@ -42,7 +43,7 @@ class Conexion extends Thread {
                 String palabra = datos.substring(14);
                 buscarPalabraEnBD(palabra);
             } else if (datos.startsWith("agregarPalabra:")) {
-                String contenido = datos.substring(15); // O ajusta el índice según necesites
+                String contenido = datos.substring(15);
                 String[] partes = contenido.split(",", 2);
                 if (partes.length < 2) {
                     salida.writeUTF("Error: formato incorrecto para agregar.");
@@ -51,12 +52,38 @@ class Conexion extends Thread {
                     String significado = partes[1];
                     agregarPalabraEnBD(palabra, significado);
                 }
+            } else if (datos.startsWith("buscarPDF:")) {
+
+            } else if (datos.startsWith("agregarPDF:")) {
+                String contenido = datos.substring(11);
+                String[] partes = contenido.split(",", 2);
+                if (partes.length < 2) {
+                    salida.writeUTF("Error: formato incorrecto para agregar.");
+                } else {
+                    String nombredocPDF = partes[0];
+                    String rutaDestino = "/doc/" + nombredocPDF;
+                    try (FileOutputStream fos = new FileOutputStream(rutaDestino)) {
+                        byte[] buffer = new byte[4096];
+                        int bytesRead = -1;
+                        while ((bytesRead = entrada.read(buffer)) != -1) {
+                            fos.write(buffer, 0, bytesRead);
+                        }
+                        fos.flush();
+                        String filePath = "/doc/" + nombredocPDF;
+                        //agregarPDFEnBD(nombredocPDF, filePath);
+                    } catch (IOException e) {
+                        salida.writeUTF("Error al recibir el archivo: " + e.getMessage());
+                    }
+                }
+            } else {
+                salida.writeUTF("Error: comando no reconocido.");
             }
             socketCliente.close();
         } catch (EOFException e) {
             System.out.println("EOF: " + e.getMessage());
         } catch (IOException e) {
             System.out.println("IO: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -72,7 +99,7 @@ class Conexion extends Thread {
             if (rs.next()) {
                 salida.writeUTF("El significado de '" + palabra + "' es: " + rs.getString("significado"));
             } else {
-                salida.writeUTF("La palabra '" + palabra + "' no está almacenada en la base de datos");
+                salida.writeUTF("La palabra '" + palabra + "' no esta almacenada en la base de datos");
             }
             rs.close();
             pstmt.close();
@@ -103,4 +130,49 @@ class Conexion extends Thread {
             System.out.println("Error al enviar datos al cliente: " + e.getMessage());
         }
     }
+
+    private void buscarPDFEnBD(String documento) {
+        try {
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dsjavatcp",
+                    "root",
+                    "");
+            String consulta = "SELECT url FROM documentos WHERE nombre = ?";
+            PreparedStatement pstmt = conn.prepareStatement(consulta);
+            pstmt.setString(1, documento);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                salida.writeUTF("El documento solicitado es: " + rs.getString("url"));
+            } else {
+                salida.writeUTF("El documento '" + documento + "' no esta almacenada en la base de datos");
+            }
+            rs.close();
+            pstmt.close();
+            conn.close();
+        } catch (SQLException e) {
+            System.out.println("Error al buscar en la base de datos: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error al enviar datos al cliente: " + e.getMessage());
+        }
+    }
+
+    private void agregrarPDFEnBD(String documento, String url) {
+        try {
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dsjavatcp",
+                    "root",
+                    "");
+            String consulta = "INSERT INTO documentos (NOMBRE, URL) VALUES (?, ?)";
+            PreparedStatement statement = conn.prepareStatement(consulta);
+            statement.setString(1, documento);
+            statement.setString(2, url);
+            statement.executeUpdate();
+            salida.writeUTF("El documento " + documento + " fue ingresada con exito.");
+            statement.close();
+            conn.close();
+        } catch (SQLException e) {
+            System.out.println("Error al agregar documento en la base de datos: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error al enviar datos al cliente: " + e.getMessage());
+        }
+    }
+
 }

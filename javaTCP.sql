@@ -15,7 +15,6 @@ create table DOCUMENTOS
 (
    ID_DOC               int not null auto_increment,
    NOMBRE               varchar(100),
-   TEMA                 varchar(100),
    URL                  varchar(4096),
    primary key (ID_DOC)
 );

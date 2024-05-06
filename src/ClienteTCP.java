@@ -104,17 +104,26 @@ public class ClienteTCP {
                                     System.out.print("Ingrese la ruta del archivo: ");
                                     String rutaPDF = scanner.nextLine();
                                     File archivoPDF = new File(rutaPDF);
+                                    // ! buscar como pasar el archivo a bits para mandar el archivo
+                                    // ! al servidor.
                                     if (archivoPDF.exists() && !archivoPDF.isDirectory()) {
                                         try (FileInputStream fis = new FileInputStream(archivoPDF)) {
-                                            byte[] buffer = new byte[4096];
+                                            byte[] buffer = new byte[32767];
                                             int bytesRead = -1;
+                                            System.out.println("hola antes del while");
                                             while ((bytesRead = fis.read(buffer)) != -1) {
+                                                System.out.println(bytesRead + " salida 1");
                                                 salida.write(buffer, 0, bytesRead);
+
+                                                System.out.println("salida 2");
                                             }
+                                            System.out.println("hola antes del flush");
                                             salida.flush();
+                                            System.out.println("hola despues del flush");
                                         } catch (IOException ex) {
-                                            System.out.println("Error al leer el archivo: " + ex.getMessage());
+                                            System.out.println("Error al enviar el archivo: " + ex.getMessage());
                                         }
+                                        salida.writeUTF("agregarPDF:" + nombrePDF + "," + rutaPDF);
                                     } else {
                                         System.out.println("El archivo no existe o es un directorio.");
                                     }

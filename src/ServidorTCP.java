@@ -63,14 +63,16 @@ class Conexion extends Thread {
                     String nombredocPDF = partes[0];
                     String rutaDestino = "/doc/" + nombredocPDF;
                     try (FileOutputStream fos = new FileOutputStream(rutaDestino)) {
-                        byte[] buffer = new byte[4096];
+                        byte[] buffer = new byte[32767];
                         int bytesRead = -1;
+                        System.out.println("hola antes del while");
                         while ((bytesRead = entrada.read(buffer)) != -1) {
                             fos.write(buffer, 0, bytesRead);
+                            System.out.println(buffer);
                         }
                         fos.flush();
                         String filePath = "/doc/" + nombredocPDF;
-                        //agregarPDFEnBD(nombredocPDF, filePath);
+                        agregarPDFEnBD(nombredocPDF, filePath);
                     } catch (IOException e) {
                         salida.writeUTF("Error al recibir el archivo: " + e.getMessage());
                     }
@@ -155,7 +157,7 @@ class Conexion extends Thread {
         }
     }
 
-    private void agregrarPDFEnBD(String documento, String url) {
+    private void agregarPDFEnBD(String documento, String url) {
         try {
             Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dsjavatcp",
                     "root",
@@ -174,5 +176,4 @@ class Conexion extends Thread {
             System.out.println("Error al enviar datos al cliente: " + e.getMessage());
         }
     }
-
 }

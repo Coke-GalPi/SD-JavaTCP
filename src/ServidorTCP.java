@@ -55,33 +55,34 @@ class Conexion extends Thread {
             } else if (datos.startsWith("buscarPDF:")) {
 
             } else if (datos.startsWith("agregarPDF:")) {
-                String contenido = datos.substring(11);
-                String[] partes = contenido.split(",", 2);
-                if (partes.length < 2) {
-                    salida.writeUTF("Error: formato incorrecto para agregar.");
-                } else {
-                    String nombredocPDF = partes[0];
-                    String rutaDestino = "/doc/" + nombredocPDF;
-                    try (FileOutputStream fos = new FileOutputStream(rutaDestino)) {
-                        byte[] buffer = new byte[32767];
-                        int bytesRead = -1;
-                        System.out.println("hola antes del while");
-                        while ((bytesRead = entrada.read(buffer)) != -1) {
-                            fos.write(buffer, 0, bytesRead);
-                            System.out.println(buffer);
-                        }
-                        fos.flush();
-                        String filePath = "/doc/" + nombredocPDF;
-                        agregarPDFEnBD(nombredocPDF, filePath);
-                    } catch (IOException e) {
-                        salida.writeUTF("Error al recibir el archivo: " + e.getMessage());
+                try {
+                    // Crear flujo de entrada para recibir el archivo
+                    DataInputStream dis = new DataInputStream(socketCliente.getInputStream());
+                    String fileName = dis.readUTF(); // Leer el nombre del archivo
+                    String filePath = "ruta" + fileName;
+                    long fileSize = dis.readLong(); // Leer el tamaño del archivo
+                    FileOutputStream fos = new FileOutputStream(fileName);
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    long bytesRemaining = fileSize;
+                    while ((bytesRead = dis.read(buffer, 0, (int) Math.min(buffer.length, bytesRemaining))) > 0) {
+                        fos.write(buffer, 0, bytesRead);
+                        bytesRemaining -= bytesRead;
                     }
+                    fos.close();
+                    dis.close();
+                    System.out.println("Archivo " + fileName + " recibido");
+                    agregarPDFEnBD(fileName, filePath);
+                } catch (IOException e) {
+                    salida.writeUTF("Error al recibir el archivo: " + e.getMessage());
                 }
             } else {
                 salida.writeUTF("Error: comando no reconocido.");
             }
             socketCliente.close();
-        } catch (EOFException e) {
+        } catch (
+
+        EOFException e) {
             System.out.println("EOF: " + e.getMessage());
         } catch (IOException e) {
             System.out.println("IO: " + e.getMessage());

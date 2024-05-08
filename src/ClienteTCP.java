@@ -104,22 +104,20 @@ public class ClienteTCP {
                                     System.out.print("Ingrese la ruta del archivo: ");
                                     String rutaPDF = scanner.nextLine();
                                     File archivoPDF = new File(rutaPDF);
-                                    // ! buscar como pasar el archivo a bits para mandar el archivo
-                                    // ! al servidor.
                                     if (archivoPDF.exists() && !archivoPDF.isDirectory()) {
-                                        try (FileInputStream fis = new FileInputStream(archivoPDF)) {
-                                            byte[] buffer = new byte[32767];
-                                            int bytesRead = -1;
-                                            System.out.println("hola antes del while");
-                                            while ((bytesRead = fis.read(buffer)) != -1) {
-                                                System.out.println(bytesRead + " salida 1");
-                                                salida.write(buffer, 0, bytesRead);
-
-                                                System.out.println("salida 2");
+                                        try {
+                                            File file = new File(rutaPDF);
+                                            FileInputStream fis = new FileInputStream(file);
+                                            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+                                            // Enviar el nombre y tamaño del archivo
+                                            dos.writeUTF(file.getName());
+                                            dos.writeLong(file.length());
+                                            byte[] buffer = new byte[4096];
+                                            int bytesRead;
+                                            while ((bytesRead = fis.read(buffer)) > 0) {
+                                                dos.write(buffer, 0, bytesRead);
                                             }
-                                            System.out.println("hola antes del flush");
-                                            salida.flush();
-                                            System.out.println("hola despues del flush");
+                                            System.out.println("Archivo enviado");
                                         } catch (IOException ex) {
                                             System.out.println("Error al enviar el archivo: " + ex.getMessage());
                                         }
